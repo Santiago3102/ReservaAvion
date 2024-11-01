@@ -22,27 +22,23 @@ public class Vuelo {
     private void inicializarAsientos() {
         // Asientos ejecutivos (8 asientos, 2 filas de 4)
         for (int i = 0; i < 8; i++) {
-            String ubicacion;
-            if (i % 4 == 0 || i % 4 == 3) {
-                ubicacion = "ventana";
-            } else {
-                ubicacion = "pasillo";
-            }
-            asientos.add(new Asiento(i + 1, "ejecutiva", ubicacion));
+            String tipo = (i % 4 == 0 || i % 4 == 3) ? 
+                "ejecutiva_ventana" : "ejecutiva_pasillo";
+            asientos.add(AsientoFactory.getAsiento(tipo, i + 1));
         }
         
         // Asientos económicos (42 asientos, 7 filas de 6)
         for (int i = 8; i < 50; i++) {
-            String ubicacion;
             int pos = (i - 8) % 6;
+            String tipo;
             if (pos == 0 || pos == 5) {
-                ubicacion = "ventana";
+                tipo = "economica_ventana";
             } else if (pos == 2 || pos == 3) {
-                ubicacion = "pasillo";
+                tipo = "economica_pasillo";
             } else {
-                ubicacion = "centro";
+                tipo = "economica_centro";
             }
-            asientos.add(new Asiento(i + 1, "economica", ubicacion));
+            asientos.add(AsientoFactory.getAsiento(tipo, i + 1));
         }
     }
     
@@ -115,6 +111,4 @@ public class Vuelo {
     public LocalDateTime getHoraLlegada() { return horaLlegada; }
     public void setHoraSalida(LocalDateTime horaSalida) { this.horaSalida = horaSalida; }
     public void setHoraLlegada(LocalDateTime horaLlegada) { this.horaLlegada = horaLlegada; }
-
-    
 }

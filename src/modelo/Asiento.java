@@ -1,10 +1,10 @@
 package modelo;
 
-public class Asiento {
-    private final int numero;
+public class Asiento implements AsientoPrototype {
+    private int numero;
     private boolean ocupado;
-    private final String clase; // "ejecutiva" o "economica"
-    private final String ubicacion; // "ventana", "pasillo", "centro"
+    private final String clase;
+    private final String ubicacion;
     private String pasajeroNombre;
     private String pasajeroCedula;
     
@@ -15,8 +15,20 @@ public class Asiento {
         this.ocupado = false;
     }
     
+    @Override
+    public AsientoPrototype clonar() {
+        Asiento clon = null;
+        try {
+            clon = (Asiento) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return clon;
+    }
+    
     // Getters y setters
     public int getNumero() { return numero; }
+    public void setNumero(int numero) { this.numero = numero; }
     public boolean isOcupado() { return ocupado; }
     public String getClase() { return clase; }
     public String getUbicacion() { return ubicacion; }
@@ -38,5 +50,4 @@ public class Asiento {
         this.pasajeroNombre = null;
         this.pasajeroCedula = null;
     }
-    
 }
