@@ -1,4 +1,4 @@
-package main;
+package ReservasAvion;
 
 import modelo.Vuelo;
 import vista.VueloVista;
