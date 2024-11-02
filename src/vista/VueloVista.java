@@ -8,6 +8,11 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.PlainDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+import java.util.regex.Pattern;
 
 public class VueloVista extends JFrame {
     private VueloController controlador;
@@ -19,7 +24,7 @@ public class VueloVista extends JFrame {
 
     public VueloVista() {
         setTitle("Sistema de Reservas - Avión Maravilla");
-        setSize(800, 800); // Increased height to accommodate new layout
+        setSize(800, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -50,6 +55,10 @@ public class VueloVista extends JFrame {
         cedulaField = new JTextField();
         claseCombo = new JComboBox<>(new String[]{"ejecutiva", "economica"});
         ubicacionCombo = new JComboBox<>(new String[]{"ventana", "pasillo", "centro"});
+
+        // Configurar validaciones de campos
+        configurarCampoNombre(nombreField);
+        configurarCampoCedula(cedulaField);
 
         datosPanel.add(new JLabel("Nombre:"));
         datosPanel.add(nombreField);
@@ -115,7 +124,7 @@ public class VueloVista extends JFrame {
                 btn.setMargin(new Insets(2, 2, 2, 2));
                 btn.setBackground(Color.CYAN);
                 gbc.gridx = j;
-                gbc.gridy = i + 4; // Aumentado para dejar más espacio
+                gbc.gridy = i + 4;
                 gbc.insets = new Insets(5, 5, 5, 5);
                 asientosPanel.add(btn, gbc);
                 asientos[i + 2][j] = btn;
@@ -128,6 +137,93 @@ public class VueloVista extends JFrame {
         mainPanel.add(asientosPanel, BorderLayout.SOUTH);
 
         add(mainPanel);
+    }
+
+    private void configurarCampoNombre(JTextField campo) {
+        ((PlainDocument) campo.getDocument()).setDocumentFilter(new DocumentFilter() {
+            private Pattern pattern = Pattern.compile("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+");
+
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) 
+                    throws BadLocationException {
+                if (text == null || pattern.matcher(text).matches()) {
+                    super.replace(fb, offset, length, text, attrs);
+                } else {
+                    mostrarMensajeError("El nombre solo puede contener letras y espacios");
+                }
+            }
+
+            @Override
+            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) 
+                    throws BadLocationException {
+                if (string == null || pattern.matcher(string).matches()) {
+                    super.insertString(fb, offset, string, attr);
+                } else {
+                    mostrarMensajeError("El nombre solo puede contener letras y espacios");
+                }
+            }
+        });
+    }
+
+    private void configurarCampoCedula(JTextField campo) {
+        ((PlainDocument) campo.getDocument()).setDocumentFilter(new DocumentFilter() {
+            private Pattern pattern = Pattern.compile("\\d+");
+
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) 
+                    throws BadLocationException {
+                if (text == null || pattern.matcher(text).matches()) {
+                    super.replace(fb, offset, length, text, attrs);
+                } else {
+                    mostrarMensajeError("La cédula solo puede contener números");
+                }
+            }
+
+            @Override
+            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) 
+                    throws BadLocationException {
+                if (string == null || pattern.matcher(string).matches()) {
+                    super.insertString(fb, offset, string, attr);
+                } else {
+                    mostrarMensajeError("La cédula solo puede contener números");
+                }
+            }
+        });
+    }
+
+    private void realizarReserva() {
+        String nombre = nombreField.getText().trim();
+        String cedula = cedulaField.getText().trim();
+        String clase = (String) claseCombo.getSelectedItem();
+        String ubicacion = (String) ubicacionCombo.getSelectedItem();
+
+        // Validar campos vacíos
+        if (nombre.isEmpty() || cedula.isEmpty()) {
+            mostrarMensaje("Por favor complete todos los campos");
+            return;
+        }
+
+        // Validar longitud mínima del nombre
+        if (nombre.length() < 3) {
+            mostrarMensaje("El nombre debe tener al menos 3 caracteres");
+            return;
+        }
+
+        // Validar longitud de la cédula
+        if (cedula.length() < 5 || cedula.length() > 10) {
+            mostrarMensaje("La cédula debe tener entre 5 y 10 dígitos");
+            return;
+        }
+
+        // Verificar si la cédula ya existe en el sistema
+        Asiento asientoExistente = controlador.buscarPorCedula(cedula);
+        if (asientoExistente != null) {
+            mostrarMensaje("Ya existe una reserva con esta cédula. No se puede realizar la reserva.");
+            return;
+        }
+
+        // Si todas las validaciones pasan, proceder con la reserva
+        controlador.reservarAsiento(nombre, cedula, clase, ubicacion);
     }
 
     private class AsientosConFondoPanel extends JPanel {
@@ -153,22 +249,8 @@ public class VueloVista extends JFrame {
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(600, 400);
+            return new Dimension(600, 500);
         }
-    }
-
-    private void realizarReserva() {
-        String nombre = nombreField.getText();
-        String cedula = cedulaField.getText();
-        String clase = (String) claseCombo.getSelectedItem();
-        String ubicacion = (String) ubicacionCombo.getSelectedItem();
-
-        if (nombre.isEmpty() || cedula.isEmpty()) {
-            mostrarMensaje("Por favor complete todos los campos");
-            return;
-        }
-
-        controlador.reservarAsiento(nombre, cedula, clase, ubicacion);
     }
     
     private void buscarPorCedula() {
@@ -263,6 +345,15 @@ public class VueloVista extends JFrame {
             mensaje,
             "Tiquete de Vuelo",
             JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+    
+    private void mostrarMensajeError(String mensaje) {
+        JOptionPane.showMessageDialog(
+            this,
+            mensaje,
+            "Error de entrada",
+            JOptionPane.ERROR_MESSAGE
         );
     }
     
